@@ -2,23 +2,36 @@ package com.example.mymovies;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
-import android.widget.ArrayAdapter;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
+    ListView lvMovie;
     ArrayList<Movies> alMovies;
-    ListView lvMovies;
-    CustomAdaptor ccMovies;
+    CustomAdaptor caMovie;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        lvMovie = findViewById(R.id.lvName);
         alMovies = new ArrayList<>();
 
         Movies film1=new Movies("How to Train Your Dragon: The Hidden World", "2019", "PG", "Comedy Adventure", "GV", "January", "");
@@ -62,9 +75,71 @@ public class MainActivity extends AppCompatActivity {
         Movies film20=new Movies("Spider-man: Far From Home", "2019", "PG", "Action Adventure", "TBA", "TBA", "");
         alMovies.add(film20);
 
-        lvMovies=new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, ccMovies);
+        caMovie = new CustomAdaptor(this, R.layout.row, alMovies);
+        lvMovie.setAdapter(caMovie);
 
-        alMovies.setAdapter(lvMovies);
-        adapter=new CustomAdaptor(this, R.layout.activity_main, ccMovie);
+        lvMovie.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                int position = i;
+                Intent intent = new Intent(MainActivity.this, DisplayMovie.class);
+                intent.putExtra("title", alMovies.get(i).getTitle());
+                intent.putExtra("year", alMovies.get(i).getYear());
+                intent.putExtra("rated", alMovies.get(i).getRated());
+                intent.putExtra("genre", alMovies.get(i).getGenre());
+                intent.putExtra("watched_on", alMovies.get(i).getWatched_on());
+                intent.putExtra("in_theatre", alMovies.get(i).getIn_theatre());
+                intent.putExtra("description", alMovies.get(i).getDescription());
+                startActivity(intent);
+            }
+        });
+        Intent intent = getIntent();
+
+        if (getIntent().hasExtra("source")) {
+            Log.d("Intent >", intent.toString());
+
+            if (intent.getStringExtra("source").equals("AddMovie")) {
+                String title = intent.getStringExtra("title");
+                String year = intent.getStringExtra("year");
+                String rated = intent.getStringExtra("rated");
+                String genre = intent.getStringExtra("genre");
+                String in_theatre = intent.getStringExtra("in_theatre");
+                String watched_on = intent.getStringExtra("watched_on");
+                String description = intent.getStringExtra("description");
+
+                Log.d("Test", "title " + title);
+
+                Movies newMovie = new Movies(title, year, rated, genre, watched_on, in_theatre, description);
+                alMovies.add(newMovie);
+                caMovie.notifyDataSetChanged();
+            } else if (intent.getStringExtra("source").equals("DisplayMovie")) {
+                String title = intent.getStringExtra("title");
+                for (Movies movie : alMovies) {
+                    if (movie.getTitle().equals(title)) {
+                        alMovies.remove(movie);
+                    }
+                }
+                caMovie.notifyDataSetChanged();
+            } else {
+            }
+        }
+    }
+
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu, menu);
+        return true;
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.menuAdd) {
+            Intent intent = new Intent(MainActivity.this, AddMovie.class);
+            startActivity(intent);
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 }
